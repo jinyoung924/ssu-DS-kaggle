@@ -1,0 +1,6 @@
+model: ease
+params:
+  reg: 500.0
+  # item 수가 많으면 Gram matrix(max_items^2)가 메모리를 초과함
+  # 10000 -> 약 0.4GB x 3. Mac에서 RAM 여유가 있으면 늘려볼 것
+  max_items: 10000

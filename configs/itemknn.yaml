@@ -1,0 +1,4 @@
+model: itemknn
+params:
+  k: 100        # target item마다 남길 neighbor 수
+  shrink: 10.0  # cosine 분모에 더하는 값 (co-occurrence가 적은 쌍 억제)
