@@ -1,0 +1,30 @@
+stage,combo,weights,recall@20
+evaluate,only_lightgcn,"{""lightgcn"": 1.0}",0.04067
+evaluate,init,"{""easetime"": 1.0, ""fnbg"": 0.5, ""tfidf"": 0.25, ""itemknn"": 0.3, ""cat"": 0.2, ""store"": 0.2, ""title"": 0.1, ""path"": 0.05}",0.07052
+r1,lightgcn=0.05,"{""easetime"": 1.0, ""fnbg"": 0.5, ""tfidf"": 0.25, ""itemknn"": 0.3, ""cat"": 0.2, ""store"": 0.2, ""title"": 0.1, ""path"": 0.05, ""lightgcn"": 0.05}",0.0708
+r1,lightgcn=0.1,"{""easetime"": 1.0, ""fnbg"": 0.5, ""tfidf"": 0.25, ""itemknn"": 0.3, ""cat"": 0.2, ""store"": 0.2, ""title"": 0.1, ""path"": 0.05, ""lightgcn"": 0.1}",0.07133
+r1,lightgcn=0.2,"{""easetime"": 1.0, ""fnbg"": 0.5, ""tfidf"": 0.25, ""itemknn"": 0.3, ""cat"": 0.2, ""store"": 0.2, ""title"": 0.1, ""path"": 0.05, ""lightgcn"": 0.2}",0.07133
+r1,lightgcn=0.3,"{""easetime"": 1.0, ""fnbg"": 0.5, ""tfidf"": 0.25, ""itemknn"": 0.3, ""cat"": 0.2, ""store"": 0.2, ""title"": 0.1, ""path"": 0.05, ""lightgcn"": 0.3}",0.07121
+r1,lightgcn=0.5,"{""easetime"": 1.0, ""fnbg"": 0.5, ""tfidf"": 0.25, ""itemknn"": 0.3, ""cat"": 0.2, ""store"": 0.2, ""title"": 0.1, ""path"": 0.05, ""lightgcn"": 0.5}",0.0708
+r1,itemknn=0,"{""easetime"": 1.0, ""fnbg"": 0.5, ""tfidf"": 0.25, ""itemknn"": 0.0, ""cat"": 0.2, ""store"": 0.2, ""title"": 0.1, ""path"": 0.05, ""lightgcn"": 0.1}",0.06936
+r1,itemknn=0.15,"{""easetime"": 1.0, ""fnbg"": 0.5, ""tfidf"": 0.25, ""itemknn"": 0.15, ""cat"": 0.2, ""store"": 0.2, ""title"": 0.1, ""path"": 0.05, ""lightgcn"": 0.1}",0.07052
+r1,itemknn=0.5,"{""easetime"": 1.0, ""fnbg"": 0.5, ""tfidf"": 0.25, ""itemknn"": 0.5, ""cat"": 0.2, ""store"": 0.2, ""title"": 0.1, ""path"": 0.05, ""lightgcn"": 0.1}",0.07071
+r1,easetime=0.7,"{""easetime"": 0.7, ""fnbg"": 0.5, ""tfidf"": 0.25, ""itemknn"": 0.3, ""cat"": 0.2, ""store"": 0.2, ""title"": 0.1, ""path"": 0.05, ""lightgcn"": 0.1}",0.07101
+r1,easetime=1.5,"{""easetime"": 1.5, ""fnbg"": 0.5, ""tfidf"": 0.25, ""itemknn"": 0.3, ""cat"": 0.2, ""store"": 0.2, ""title"": 0.1, ""path"": 0.05, ""lightgcn"": 0.1}",0.06887
+r1,tfidf=0.2,"{""easetime"": 1.0, ""fnbg"": 0.5, ""tfidf"": 0.2, ""itemknn"": 0.3, ""cat"": 0.2, ""store"": 0.2, ""title"": 0.1, ""path"": 0.05, ""lightgcn"": 0.1}",0.07082
+r1,tfidf=0.3,"{""easetime"": 1.0, ""fnbg"": 0.5, ""tfidf"": 0.3, ""itemknn"": 0.3, ""cat"": 0.2, ""store"": 0.2, ""title"": 0.1, ""path"": 0.05, ""lightgcn"": 0.1}",0.07127
+r1,fnbg=0.4,"{""easetime"": 1.0, ""fnbg"": 0.4, ""tfidf"": 0.25, ""itemknn"": 0.3, ""cat"": 0.2, ""store"": 0.2, ""title"": 0.1, ""path"": 0.05, ""lightgcn"": 0.1}",0.07026
+r1,fnbg=0.6,"{""easetime"": 1.0, ""fnbg"": 0.6, ""tfidf"": 0.25, ""itemknn"": 0.3, ""cat"": 0.2, ""store"": 0.2, ""title"": 0.1, ""path"": 0.05, ""lightgcn"": 0.1}",0.07063
+r2,lightgcn=0.05,"{""easetime"": 1.0, ""fnbg"": 0.5, ""tfidf"": 0.25, ""itemknn"": 0.3, ""cat"": 0.2, ""store"": 0.2, ""title"": 0.1, ""path"": 0.05, ""lightgcn"": 0.05}",0.0708
+r2,lightgcn=0.2,"{""easetime"": 1.0, ""fnbg"": 0.5, ""tfidf"": 0.25, ""itemknn"": 0.3, ""cat"": 0.2, ""store"": 0.2, ""title"": 0.1, ""path"": 0.05, ""lightgcn"": 0.2}",0.07133
+r2,lightgcn=0.3,"{""easetime"": 1.0, ""fnbg"": 0.5, ""tfidf"": 0.25, ""itemknn"": 0.3, ""cat"": 0.2, ""store"": 0.2, ""title"": 0.1, ""path"": 0.05, ""lightgcn"": 0.3}",0.07121
+r2,lightgcn=0.5,"{""easetime"": 1.0, ""fnbg"": 0.5, ""tfidf"": 0.25, ""itemknn"": 0.3, ""cat"": 0.2, ""store"": 0.2, ""title"": 0.1, ""path"": 0.05, ""lightgcn"": 0.5}",0.0708
+r2,itemknn=0,"{""easetime"": 1.0, ""fnbg"": 0.5, ""tfidf"": 0.25, ""itemknn"": 0.0, ""cat"": 0.2, ""store"": 0.2, ""title"": 0.1, ""path"": 0.05, ""lightgcn"": 0.1}",0.06936
+r2,itemknn=0.15,"{""easetime"": 1.0, ""fnbg"": 0.5, ""tfidf"": 0.25, ""itemknn"": 0.15, ""cat"": 0.2, ""store"": 0.2, ""title"": 0.1, ""path"": 0.05, ""lightgcn"": 0.1}",0.07052
+r2,itemknn=0.5,"{""easetime"": 1.0, ""fnbg"": 0.5, ""tfidf"": 0.25, ""itemknn"": 0.5, ""cat"": 0.2, ""store"": 0.2, ""title"": 0.1, ""path"": 0.05, ""lightgcn"": 0.1}",0.07071
+r2,easetime=0.7,"{""easetime"": 0.7, ""fnbg"": 0.5, ""tfidf"": 0.25, ""itemknn"": 0.3, ""cat"": 0.2, ""store"": 0.2, ""title"": 0.1, ""path"": 0.05, ""lightgcn"": 0.1}",0.07101
+r2,easetime=1.5,"{""easetime"": 1.5, ""fnbg"": 0.5, ""tfidf"": 0.25, ""itemknn"": 0.3, ""cat"": 0.2, ""store"": 0.2, ""title"": 0.1, ""path"": 0.05, ""lightgcn"": 0.1}",0.06887
+r2,tfidf=0.2,"{""easetime"": 1.0, ""fnbg"": 0.5, ""tfidf"": 0.2, ""itemknn"": 0.3, ""cat"": 0.2, ""store"": 0.2, ""title"": 0.1, ""path"": 0.05, ""lightgcn"": 0.1}",0.07082
+r2,tfidf=0.3,"{""easetime"": 1.0, ""fnbg"": 0.5, ""tfidf"": 0.3, ""itemknn"": 0.3, ""cat"": 0.2, ""store"": 0.2, ""title"": 0.1, ""path"": 0.05, ""lightgcn"": 0.1}",0.07127
+r2,fnbg=0.4,"{""easetime"": 1.0, ""fnbg"": 0.4, ""tfidf"": 0.25, ""itemknn"": 0.3, ""cat"": 0.2, ""store"": 0.2, ""title"": 0.1, ""path"": 0.05, ""lightgcn"": 0.1}",0.07026
+r2,fnbg=0.6,"{""easetime"": 1.0, ""fnbg"": 0.6, ""tfidf"": 0.25, ""itemknn"": 0.3, ""cat"": 0.2, ""store"": 0.2, ""title"": 0.1, ""path"": 0.05, ""lightgcn"": 0.1}",0.07063

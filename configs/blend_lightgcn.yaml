@@ -1,0 +1,49 @@
+# scripts/tune_blend.py gpu_lightgcn.yaml 결과: valid Recall@20 0.07133 (lightgcn 0.1과 0.2가 동점 -> 중간값 0.15 사용)
+model: blend
+params:
+  components:
+  - model: easetime
+    weight: 1.0
+    params:
+      reg: 500.0
+      tau_days: 365
+  - model: fileorder
+    weight: 0.5
+    params:
+      window: 50
+      kernel: gauss
+      sigma: 20
+  - model: textsim
+    weight: 0.25
+    params:
+      source: tfidf
+      field: text
+      k: 50
+  - model: itemknn
+    weight: 0.3
+    params:
+      k: 100
+      shrink: 10.0
+  - model: affinity
+    weight: 0.2
+    params:
+      attr: leaf
+  - model: affinity
+    weight: 0.2
+    params:
+      attr: store
+  - model: textsim
+    weight: 0.1
+    params:
+      source: tfidf
+      field: title
+      k: 50
+  - model: affinity
+    weight: 0.05
+    params:
+      attr: path
+  - model: precomputed
+    weight: 0.15
+    params:
+      name: lightgcn
+      dir: data/external

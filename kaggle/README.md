@@ -20,13 +20,16 @@
 ## 로컬에서 합치기
 
 ```bash
-# 1. GPU component 2개를 기존 최고 blend에 더해 가중치 탐색 -> configs/blend_gpu.yaml
-uv run python -m scripts.tune_blend configs/tune/gpu_components.yaml
+# 1. LightGCN 결과를 기존 최고 blend에 더해 가중치 탐색 -> configs/blend_lightgcn.yaml
+uv run python -m scripts.tune_blend configs/tune/gpu_lightgcn.yaml
 
 # 2. 기록용 validation run + 제출 파일
-uv run python -m src.train --config configs/blend_gpu.yaml --name gpu
-uv run python -m src.predict --config configs/blend_gpu.yaml --name gpu
+uv run python -m src.train --config configs/blend_lightgcn.yaml --name blend_lightgcn
+uv run python -m src.predict --config configs/blend_lightgcn.yaml --name blend_lightgcn
 ```
+
+- 11-27 결과: LightGCN은 blend에 더하면 +0.0010 (0.07052 → 0.07148, 채택). 텍스트 임베딩은 오히려 떨어져서 쓰지 않는다 (`configs/tune/gpu_textemb.yaml`). 수치는 `11-27_exp.md` 5-5, 5-6.
+- `configs/tune/gpu_components.yaml`은 두 결과를 함께 탐색하는 설정이다 (파일이 둘 다 있어야 실행됨).
 
 - `precomputed` component는 단계에 맞는 파일을 고른다. 검증할 때(`src.train`, `tune_blend`)는 `*_valid_*`, 제출할 때(`src.predict`)는 `*_full_*`.
 - `textsim` component(`source: emb`)는 `text_emb.npy` 하나를 두 단계에 같이 쓴다. 텍스트는 split과 무관하기 때문이다.
