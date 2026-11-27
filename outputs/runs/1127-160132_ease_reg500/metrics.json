@@ -1,0 +1,7 @@
+{
+  "recall@20": 0.04829107418194278,
+  "n_eval_users": 36043,
+  "split": "random",
+  "best_epoch": null,
+  "seconds": 12.7
+}

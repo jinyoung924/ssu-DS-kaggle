@@ -54,7 +54,7 @@ def main():
     run_id = make_run_id(cfg["model"], args.name)
     run_dir = data.OUTPUTS / "runs" / run_id
     run_dir.mkdir(parents=True, exist_ok=True)
-    with open(run_dir / "config.yaml", "w") as f:
+    with open(run_dir / "config.yaml", "w", encoding="utf-8") as f:
         yaml.safe_dump(cfg, f, allow_unicode=True, sort_keys=False)
     result = {"recall@20": score, "n_eval_users": int(len(eval_users)), "split": split_used,
               "best_epoch": model.best_epoch, "seconds": round(sec, 1)}

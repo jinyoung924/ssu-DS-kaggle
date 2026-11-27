@@ -6,14 +6,14 @@ from datetime import datetime
 import yaml
 
 DEFAULTS = {
-    "split": {"mode": "auto", "ratio": 0.2, "min_items": 3, "seed": 42},
+    "split": {"mode": "random", "ratio": 0.1, "min_items": 3, "seed": 42},
     "eval": {"k": 20, "test_users_only": True},
     "params": {},
 }
 
 
 def load_config(path) -> dict:
-    with open(path) as f:
+    with open(path, encoding="utf-8") as f:
         cfg = yaml.safe_load(f) or {}
     out = copy.deepcopy(DEFAULTS)
     for key, val in cfg.items():

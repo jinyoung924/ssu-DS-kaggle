@@ -43,10 +43,10 @@ uv run python -m src.experiments show
 
 ## Local validation
 
-`src/split.py`: user별로 interaction 일부(`ratio`, 기본 20%)를 valid로 뗀다.
+`src/split.py`: user별로 interaction 일부(`ratio`, 기본 10%)를 valid로 뗀다.
 test 정답이 그 user의 train에 없다는 조건을 그대로 따른다.
 
-- time column이 있으면 user별 마지막 interaction, 없으면 랜덤
+- 기본은 랜덤 분리 (`mode: random`, 대회 가이드 권장). `mode: time`이면 user별 마지막 interaction, `auto`면 time column이 있을 때 time
 - interaction이 `min_items` 미만인 user는 전부 train에 남김
 - 기본적으로 test.csv에 있는 user만 평가 (`eval.test_users_only`)
 

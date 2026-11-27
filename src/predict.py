@@ -58,7 +58,7 @@ def main():
 
     run_dir = data.OUTPUTS / "runs" / run_id
     run_dir.mkdir(parents=True, exist_ok=True)
-    with open(run_dir / "config.yaml", "w") as f:
+    with open(run_dir / "config.yaml", "w", encoding="utf-8") as f:
         yaml.safe_dump(cfg, f, allow_unicode=True, sort_keys=False)
     experiments.append(run_id, "submit", cfg["model"], cfg["params"], "full", None, note)
 

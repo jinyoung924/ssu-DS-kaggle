@@ -1,0 +1,10 @@
+time,run_id,stage,model,params,split,recall@20,public_lb,note
+2026-11-27 14:43,1127-144320_popular_baseline,valid,popular,{},time,0.02405,,
+2026-11-27 14:43,1127-144347_itemknn_k100,valid,itemknn,"{""k"": 100, ""shrink"": 10.0}",time,0.01491,,
+2026-11-27 14:44,1127-144409_ease_reg500,valid,ease,"{""reg"": 500.0, ""max_items"": 10000}",time,0.03284,,
+2026-11-27 14:44,1127-144433_popular_rand10,valid,popular,{},random,0.02321,,random 10% split (guide 권장)
+2026-11-27 14:44,1127-144439_itemknn_rand10,valid,itemknn,"{""k"": 100, ""shrink"": 10.0}",random,0.03225,,random 10% split (guide 권장)
+2026-11-27 14:45,1127-144501_ease_rand10,valid,ease,"{""reg"": 500.0, ""max_items"": 10000}",random,0.04829,,random 10% split (guide 권장)
+2026-11-27 15:56,1127-155635_lightgcn_d64l3,valid,lightgcn,"{""dim"": 64, ""layers"": 3, ""lr"": 0.001, ""reg"": 0.0001, ""epochs"": 100, ""batch_size"": 4096, ""eval_every"": 5, ""patience"": 3, ""device"": ""auto"", ""seed"": 42}",time,0.02991,,
+2026-11-27 16:01,1127-160132_ease_reg500,valid,ease,"{""reg"": 500.0, ""max_items"": 10000}",random,0.04829,,
+2026-11-27 16:01,1127-160145_ease,submit,ease,"{""reg"": 500.0, ""max_items"": 10000}",full,,0.04943,from 1127-160132_ease_reg500
