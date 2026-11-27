@@ -44,7 +44,7 @@ def main():
     X = enc.matrix(df)
 
     model = build_model(cfg["model"], cfg["params"])
-    model.fit(X)  # eval_fn 없음 -> early stopping 없이 epochs만큼 학습
+    model.fit(X, ctx={"df": df, "enc": enc, "stage": "full"})  # eval_fn 없음 -> early stopping 없이 epochs만큼 학습
     recs = model.recommend(enc.user_index(test_users), X, k)
     item_ids = enc.items.to_numpy()[recs]
 

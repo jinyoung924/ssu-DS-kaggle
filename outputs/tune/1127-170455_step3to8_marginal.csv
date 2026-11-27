@@ -1,0 +1,32 @@
+stage,combo,weights,recall@20
+evaluate,base,"{""ease"": 1.0, ""fnb20"": 0.3}",0.05694
+evaluate,+cat0.05,"{""ease"": 1.0, ""fnb20"": 0.3, ""cat"": 0.05}",0.05756
+evaluate,+cat0.1,"{""ease"": 1.0, ""fnb20"": 0.3, ""cat"": 0.1}",0.05769
+evaluate,+cat0.2,"{""ease"": 1.0, ""fnb20"": 0.3, ""cat"": 0.2}",0.05829
+evaluate,+path0.05,"{""ease"": 1.0, ""fnb20"": 0.3, ""path"": 0.05}",0.05733
+evaluate,+path0.1,"{""ease"": 1.0, ""fnb20"": 0.3, ""path"": 0.1}",0.05739
+evaluate,+path0.2,"{""ease"": 1.0, ""fnb20"": 0.3, ""path"": 0.2}",0.05666
+evaluate,+store0.05,"{""ease"": 1.0, ""fnb20"": 0.3, ""store"": 0.05}",0.05746
+evaluate,+store0.1,"{""ease"": 1.0, ""fnb20"": 0.3, ""store"": 0.1}",0.05793
+evaluate,+store0.2,"{""ease"": 1.0, ""fnb20"": 0.3, ""store"": 0.2}",0.05767
+evaluate,+pos25_0.1,"{""ease"": 1.0, ""fnb20"": 0.3, ""pos25"": 0.1}",0.05679
+evaluate,+pos25_0.3,"{""ease"": 1.0, ""fnb20"": 0.3, ""pos25"": 0.3}",0.05579
+evaluate,+pos50_0.1,"{""ease"": 1.0, ""fnb20"": 0.3, ""pos50"": 0.1}",0.05636
+evaluate,+pos50_0.3,"{""ease"": 1.0, ""fnb20"": 0.3, ""pos50"": 0.3}",0.05384
+evaluate,+pos25e_0.1,"{""ease"": 1.0, ""fnb20"": 0.3, ""pos25e"": 0.1}",0.05634
+evaluate,+pos25e_0.3,"{""ease"": 1.0, ""fnb20"": 0.3, ""pos25e"": 0.3}",0.05409
+evaluate,+itemknn0.1,"{""ease"": 1.0, ""fnb20"": 0.3, ""itemknn"": 0.1}",0.0584
+evaluate,+itemknn0.3,"{""ease"": 1.0, ""fnb20"": 0.3, ""itemknn"": 0.3}",0.05917
+evaluate,+rp3_0.1,"{""ease"": 1.0, ""fnb20"": 0.3, ""rp3"": 0.1}",0.05806
+evaluate,+rp3_0.3,"{""ease"": 1.0, ""fnb20"": 0.3, ""rp3"": 0.3}",0.0581
+evaluate,+alive0.05,"{""ease"": 1.0, ""fnb20"": 0.3, ""alive"": 0.05}",0.05696
+evaluate,+alive0.2,"{""ease"": 1.0, ""fnb20"": 0.3, ""alive"": 0.2}",0.05694
+evaluate,easetime_instead,"{""easetime"": 1.0, ""fnb20"": 0.3}",0.05831
+evaluate,+easetime0.5,"{""ease"": 1.0, ""fnb20"": 0.3, ""easetime"": 0.5}",0.05786
+evaluate,+tfidf0.05,"{""ease"": 1.0, ""fnb20"": 0.3, ""tfidf"": 0.05}",0.05896
+evaluate,+tfidf0.15,"{""ease"": 1.0, ""fnb20"": 0.3, ""tfidf"": 0.15}",0.0635
+evaluate,only_pos25,"{""pos25"": 1.0}",0.03902
+evaluate,only_pos25e,"{""pos25e"": 1.0}",0.03334
+evaluate,only_rp3,"{""rp3"": 1.0}",0.01107
+evaluate,only_easetime,"{""easetime"": 1.0}",0.0517
+evaluate,only_tfidf,"{""tfidf"": 1.0}",0.02752

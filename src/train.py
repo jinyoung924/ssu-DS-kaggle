@@ -47,7 +47,7 @@ def main():
         return metrics.recall_at_k(model.recommend(eval_users, X_tr, k), gt_sets, k)
 
     model = build_model(cfg["model"], cfg["params"])
-    model.fit(X_tr, eval_fn=eval_fn)
+    model.fit(X_tr, eval_fn=eval_fn, ctx={"df": tr, "enc": enc, "stage": "valid"})
     score = eval_fn(model)
     sec = time.time() - t0
 

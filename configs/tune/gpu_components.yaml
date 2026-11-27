@@ -1,0 +1,25 @@
+# kaggle/ 결과(LightGCN 임베딩, 텍스트 임베딩)를 data/external/에 넣은 뒤 실행:
+#   uv run python -m scripts.tune_blend configs/tune/gpu_components.yaml
+# configs/blend_best.yaml(valid 0.07052)의 component에 GPU component 2개를 더해 가중치를 다시 맞춘다.
+components:
+  easetime:  {model: easetime, params: {reg: 500.0, tau_days: 365}}
+  fnbg:      {model: fileorder, params: {window: 50, kernel: gauss, sigma: 20}}
+  tfidf:     {model: textsim, params: {source: tfidf, field: text, k: 50}}
+  title:     {model: textsim, params: {source: tfidf, field: title, k: 50}}
+  itemknn:   {model: itemknn, params: {k: 100, shrink: 10.0}}
+  cat:       {model: affinity, params: {attr: leaf}}
+  store:     {model: affinity, params: {attr: store}}
+  path:      {model: affinity, params: {attr: path}}
+  lightgcn:  {model: precomputed, params: {name: lightgcn, dir: data/external}}                     # kaggle/lightgcn_gpu.py
+  textemb:   {model: textsim, params: {source: emb, emb_path: data/external/text_emb.npy, k: 50}}  # kaggle/text_embed_gpu.py
+evaluate:
+  only_lightgcn: "lightgcn=1"
+  only_textemb:  "textemb=1"
+init: "easetime=1,fnbg=0.5,tfidf=0.25,itemknn=0.3,cat=0.2,store=0.2,title=0.1,path=0.05"
+search:
+  lightgcn: [0.1, 0.2, 0.4]
+  textemb:  [0.05, 0.1, 0.2, 0.3]
+  tfidf:    [0.1, 0.2, 0.3]
+  itemknn:  [0.15, 0.3, 0.5]
+rounds: 2
+save_best: configs/blend_gpu.yaml

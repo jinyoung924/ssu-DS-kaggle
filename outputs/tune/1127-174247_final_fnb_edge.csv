@@ -1,0 +1,11 @@
+stage,combo,weights,recall@20
+evaluate,s12_0.5,"{""easetime"": 1.0, ""fnb_s12"": 0.5, ""tfidf"": 0.25, ""itemknn"": 0.3, ""cat"": 0.2, ""store"": 0.2, ""title"": 0.1, ""path"": 0.05}",0.06966
+evaluate,s12_0.7,"{""easetime"": 1.0, ""fnb_s12"": 0.7, ""tfidf"": 0.25, ""itemknn"": 0.3, ""cat"": 0.2, ""store"": 0.2, ""title"": 0.1, ""path"": 0.05}",0.06726
+evaluate,s30_0.5,"{""easetime"": 1.0, ""fnb_s30"": 0.5, ""tfidf"": 0.25, ""itemknn"": 0.3, ""cat"": 0.2, ""store"": 0.2, ""title"": 0.1, ""path"": 0.05}",0.07071
+evaluate,s30_0.7,"{""easetime"": 1.0, ""fnb_s30"": 0.7, ""tfidf"": 0.25, ""itemknn"": 0.3, ""cat"": 0.2, ""store"": 0.2, ""title"": 0.1, ""path"": 0.05}",0.06949
+evaluate,init,"{""easetime"": 1.0, ""fnbg"": 0.5, ""tfidf"": 0.25, ""itemknn"": 0.3, ""cat"": 0.2, ""store"": 0.2, ""title"": 0.1, ""path"": 0.05}",0.07052
+r1,fnbg=0.6,"{""easetime"": 1.0, ""fnbg"": 0.6, ""tfidf"": 0.25, ""itemknn"": 0.3, ""cat"": 0.2, ""store"": 0.2, ""title"": 0.1, ""path"": 0.05}",0.06981
+r1,fnbg=0.7,"{""easetime"": 1.0, ""fnbg"": 0.7, ""tfidf"": 0.25, ""itemknn"": 0.3, ""cat"": 0.2, ""store"": 0.2, ""title"": 0.1, ""path"": 0.05}",0.06885
+r1,fnbg=0.85,"{""easetime"": 1.0, ""fnbg"": 0.85, ""tfidf"": 0.25, ""itemknn"": 0.3, ""cat"": 0.2, ""store"": 0.2, ""title"": 0.1, ""path"": 0.05}",0.06711
+r1,tfidf=0.3,"{""easetime"": 1.0, ""fnbg"": 0.5, ""tfidf"": 0.3, ""itemknn"": 0.3, ""cat"": 0.2, ""store"": 0.2, ""title"": 0.1, ""path"": 0.05}",0.07013
+r1,tfidf=0.35,"{""easetime"": 1.0, ""fnbg"": 0.5, ""tfidf"": 0.35, ""itemknn"": 0.3, ""cat"": 0.2, ""store"": 0.2, ""title"": 0.1, ""path"": 0.05}",0.06934

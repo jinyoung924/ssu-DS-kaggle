@@ -1,0 +1,43 @@
+# scripts/tune_blend.py final_noartifact.yaml 결과: valid Recall@20 0.06287
+model: blend
+params:
+  components:
+  - model: easetime
+    weight: 1.0
+    params:
+      reg: 500.0
+      tau_days: 365
+  - model: textsim
+    weight: 0.25
+    params:
+      source: tfidf
+      field: text
+      k: 50
+  - model: itemknn
+    weight: 0.3
+    params:
+      k: 100
+      shrink: 10.0
+  - model: affinity
+    weight: 0.1
+    params:
+      attr: leaf
+  - model: affinity
+    weight: 0.2
+    params:
+      attr: store
+  - model: textsim
+    weight: 0.2
+    params:
+      source: tfidf
+      field: title
+      k: 50
+  - model: ease
+    weight: 0.5
+    params:
+      reg: 500.0
+      max_items: null
+  - model: affinity
+    weight: 0.05
+    params:
+      attr: path

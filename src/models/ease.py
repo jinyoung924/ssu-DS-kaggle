@@ -22,13 +22,16 @@ class EASE(Recommender):
             idx = np.arange(n)
         self.idx = idx
         Xs = X[:, idx].astype(np.float32)
-        G = (Xs.T @ Xs).toarray()
+        self.B = self._solve((Xs.T @ Xs).toarray())
+
+    def _solve(self, G: np.ndarray) -> np.ndarray:
+        """Gram matrix G (item x item) -> EASE weight B. G는 덮어씀."""
         G[np.diag_indices_from(G)] += self.reg
         P = np.linalg.inv(G)
         del G
         B = P / (-np.diag(P))
         B[np.diag_indices_from(B)] = 0.0
-        self.B = B.astype(np.float32)
+        return B.astype(np.float32)
 
     def score(self, users, X):
         s = np.full((len(users), X.shape[1]), -np.inf, dtype=np.float32)

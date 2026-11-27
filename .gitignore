@@ -1,8 +1,10 @@
 # data (대회 데이터는 git에 올리지 않음)
 data/raw/*
 data/processed/*
+data/external/*
 !data/raw/.gitkeep
 !data/processed/.gitkeep
+!data/external/.gitkeep
 
 # submission csv는 용량 때문에 제외, run 기록(config/metrics)은 공유
 outputs/submissions/*

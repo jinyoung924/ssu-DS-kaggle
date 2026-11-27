@@ -1,0 +1,12 @@
+split:
+  mode: random
+  ratio: 0.1
+  min_items: 3
+  seed: 42
+eval:
+  k: 20
+  test_users_only: true
+params:
+  reg: 200
+  max_items: null
+model: ease

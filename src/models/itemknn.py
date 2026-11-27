@@ -49,3 +49,21 @@ class ItemKNN(Recommender):
 
     def score(self, users, X):
         return (X[users] @ self.W).toarray()
+
+
+def topk_sim(block_fn, n: int, k: int, batch: int = 2048) -> sp.csr_matrix:
+    """block_fn(s, e) -> (e-s, n) dense 유사도. 행(출발 아이템)마다 자기 자신을 빼고 양수 top-k만 남긴 csr."""
+    rows, cols, vals = [], [], []
+    for s in range(0, n, batch):
+        e = min(s + batch, n)
+        B = np.array(block_fn(s, e), dtype=np.float32)
+        B[np.arange(e - s), np.arange(s, e)] = -np.inf
+        idx = np.argpartition(-B, k, axis=1)[:, :k]
+        v = np.take_along_axis(B, idx, axis=1).ravel()
+        keep = np.isfinite(v) & (v > 0)
+        rows.append(np.repeat(np.arange(s, e), k)[keep])
+        cols.append(idx.ravel()[keep])
+        vals.append(v[keep])
+    return sp.csr_matrix(
+        (np.concatenate(vals), (np.concatenate(rows), np.concatenate(cols))), shape=(n, n), dtype=np.float32
+    )

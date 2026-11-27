@@ -1,0 +1,21 @@
+stage,combo,weights,recall@20
+evaluate,ease,"{""ease"": 1.0}",0.04958
+evaluate,w10_g0.2,"{""ease"": 1.0, ""fnb10"": 0.2}",0.05493
+evaluate,w10_g0.3,"{""ease"": 1.0, ""fnb10"": 0.3}",0.05497
+evaluate,w20_g0.25,"{""ease"": 1.0, ""fnb20"": 0.25}",0.05651
+evaluate,w20_g0.3,"{""ease"": 1.0, ""fnb20"": 0.3}",0.05694
+evaluate,w20_g0.35,"{""ease"": 1.0, ""fnb20"": 0.35}",0.05632
+evaluate,w20_g0.4,"{""ease"": 1.0, ""fnb20"": 0.4}",0.05532
+evaluate,w30_g0.3,"{""ease"": 1.0, ""fnb30"": 0.3}",0.05673
+evaluate,w30_g0.4,"{""ease"": 1.0, ""fnb30"": 0.4}",0.05568
+evaluate,w50_g0.3,"{""ease"": 1.0, ""fnb50"": 0.3}",0.05679
+evaluate,w50_g0.4,"{""ease"": 1.0, ""fnb50"": 0.4}",0.05658
+evaluate,gauss20_g0.3,"{""ease"": 1.0, ""gauss20"": 0.3}",0.05776
+evaluate,gauss20_g0.4,"{""ease"": 1.0, ""gauss20"": 0.4}",0.05686
+evaluate,tri40_g0.3,"{""ease"": 1.0, ""tri40"": 0.3}",0.05763
+evaluate,tri40_g0.4,"{""ease"": 1.0, ""tri40"": 0.4}",0.05666
+evaluate,prev20_g0.3,"{""ease"": 1.0, ""prev20"": 0.3}",0.05335
+evaluate,next20_g0.3,"{""ease"": 1.0, ""next20"": 0.3}",0.05317
+evaluate,multi_5+30,"{""ease"": 1.0, ""fnb5"": 0.1, ""fnb30"": 0.25}",0.05709
+evaluate,multi_5+50,"{""ease"": 1.0, ""fnb5"": 0.15, ""fnb50"": 0.25}",0.05684
+evaluate,multi_10+50,"{""ease"": 1.0, ""fnb10"": 0.15, ""fnb50"": 0.25}",0.05705

@@ -1,0 +1,48 @@
+# Step 3~8: 기준(EASE + 0.3*파일이웃20)에 component를 하나씩 더했을 때의 효과 (marginal)
+components:
+  ease:     {model: ease, params: {reg: 500.0, max_items: null}}
+  fnb20:    {model: fileorder, params: {window: 20}}
+  cat:      {model: affinity, params: {attr: leaf}}                 # Step 3
+  path:     {model: affinity, params: {attr: path}}
+  store:    {model: affinity, params: {attr: store}}
+  pos25:    {model: poscooc, params: {bin: 25, base: itemknn}}      # Step 4
+  pos50:    {model: poscooc, params: {bin: 50, base: itemknn}}
+  pos25e:   {model: poscooc, params: {bin: 25, base: ease}}
+  itemknn:  {model: itemknn, params: {k: 100, shrink: 10.0}}        # Step 5
+  rp3:      {model: rp3beta, params: {alpha: 1.0, beta: 0.5}}
+  alive:    {model: alive, params: {months: 12}}                    # Step 6
+  easetime: {model: easetime, params: {reg: 500.0, tau_days: 365}}
+  tfidf:    {model: textsim, params: {source: tfidf, k: 50}}        # Step 8
+evaluate:
+  base:               "ease=1,fnb20=0.3"
+  +cat0.05:           "ease=1,fnb20=0.3,cat=0.05"
+  +cat0.1:            "ease=1,fnb20=0.3,cat=0.1"
+  +cat0.2:            "ease=1,fnb20=0.3,cat=0.2"
+  +path0.05:          "ease=1,fnb20=0.3,path=0.05"
+  +path0.1:           "ease=1,fnb20=0.3,path=0.1"
+  +path0.2:           "ease=1,fnb20=0.3,path=0.2"
+  +store0.05:         "ease=1,fnb20=0.3,store=0.05"
+  +store0.1:          "ease=1,fnb20=0.3,store=0.1"
+  +store0.2:          "ease=1,fnb20=0.3,store=0.2"
+  +pos25_0.1:         "ease=1,fnb20=0.3,pos25=0.1"
+  +pos25_0.3:         "ease=1,fnb20=0.3,pos25=0.3"
+  +pos50_0.1:         "ease=1,fnb20=0.3,pos50=0.1"
+  +pos50_0.3:         "ease=1,fnb20=0.3,pos50=0.3"
+  +pos25e_0.1:        "ease=1,fnb20=0.3,pos25e=0.1"
+  +pos25e_0.3:        "ease=1,fnb20=0.3,pos25e=0.3"
+  +itemknn0.1:        "ease=1,fnb20=0.3,itemknn=0.1"
+  +itemknn0.3:        "ease=1,fnb20=0.3,itemknn=0.3"
+  +rp3_0.1:           "ease=1,fnb20=0.3,rp3=0.1"
+  +rp3_0.3:           "ease=1,fnb20=0.3,rp3=0.3"
+  +alive0.05:         "ease=1,fnb20=0.3,alive=0.05"
+  +alive0.2:          "ease=1,fnb20=0.3,alive=0.2"
+  easetime_instead:   "easetime=1,fnb20=0.3"
+  +easetime0.5:       "ease=1,fnb20=0.3,easetime=0.5"
+  +tfidf0.05:         "ease=1,fnb20=0.3,tfidf=0.05"
+  +tfidf0.15:         "ease=1,fnb20=0.3,tfidf=0.15"
+  # 단독 점수 (참고)
+  only_pos25:         "pos25=1"
+  only_pos25e:        "pos25e=1"
+  only_rp3:           "rp3=1"
+  only_easetime:      "easetime=1"
+  only_tfidf:         "tfidf=1"

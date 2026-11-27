@@ -1,0 +1,25 @@
+# 최종 blend (Artifact 미사용, 보고서용 비교 기준): final_artifact.yaml에서 fnbg만 뺀 것
+components:
+  ease:        {model: ease, params: {reg: 500.0, max_items: null}}
+  easetime:    {model: easetime, params: {reg: 500.0, tau_days: 365}}
+  easetime180: {model: easetime, params: {reg: 500.0, tau_days: 180}}
+  tfidf:       {model: textsim, params: {source: tfidf, field: text, k: 50}}
+  tfidf100:    {model: textsim, params: {source: tfidf, field: text, k: 100}}
+  title:       {model: textsim, params: {source: tfidf, field: title, k: 50}}
+  itemknn:     {model: itemknn, params: {k: 100, shrink: 10.0}}
+  cat:         {model: affinity, params: {attr: leaf}}
+  store:       {model: affinity, params: {attr: store}}
+  path:        {model: affinity, params: {attr: path}}
+init: "easetime=1,tfidf=0.15,itemknn=0.3,cat=0.2,store=0.1"
+search:
+  tfidf:       [0.1, 0.25, 0.35, 0.5]
+  title:       [0.1, 0.2, 0.35]
+  tfidf100:    [0.1, 0.2]
+  itemknn:     [0, 0.15, 0.5]
+  ease:        [0.5, 1]
+  easetime180: [0.5, 1]
+  cat:         [0, 0.1, 0.3]
+  store:       [0, 0.05, 0.2]
+  path:        [0.05, 0.1]
+rounds: 2
+save_best: configs/blend_noartifact.yaml

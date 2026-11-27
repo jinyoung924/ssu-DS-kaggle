@@ -1,0 +1,23 @@
+# final_artifact.yaml에서 fnbg가 후보 끝값(0.5)으로 골라져서 더 큰 weight와 sigma 변형을 확인
+components:
+  easetime: {model: easetime, params: {reg: 500.0, tau_days: 365}}
+  fnbg:     {model: fileorder, params: {window: 50, kernel: gauss, sigma: 20}}
+  fnb_s12:  {model: fileorder, params: {window: 30, kernel: gauss, sigma: 12}}
+  fnb_s30:  {model: fileorder, params: {window: 75, kernel: gauss, sigma: 30}}
+  tfidf:    {model: textsim, params: {source: tfidf, field: text, k: 50}}
+  title:    {model: textsim, params: {source: tfidf, field: title, k: 50}}
+  itemknn:  {model: itemknn, params: {k: 100, shrink: 10.0}}
+  cat:      {model: affinity, params: {attr: leaf}}
+  store:    {model: affinity, params: {attr: store}}
+  path:     {model: affinity, params: {attr: path}}
+evaluate:
+  s12_0.5: "easetime=1,fnb_s12=0.5,tfidf=0.25,itemknn=0.3,cat=0.2,store=0.2,title=0.1,path=0.05"
+  s12_0.7: "easetime=1,fnb_s12=0.7,tfidf=0.25,itemknn=0.3,cat=0.2,store=0.2,title=0.1,path=0.05"
+  s30_0.5: "easetime=1,fnb_s30=0.5,tfidf=0.25,itemknn=0.3,cat=0.2,store=0.2,title=0.1,path=0.05"
+  s30_0.7: "easetime=1,fnb_s30=0.7,tfidf=0.25,itemknn=0.3,cat=0.2,store=0.2,title=0.1,path=0.05"
+init: "easetime=1,fnbg=0.5,tfidf=0.25,itemknn=0.3,cat=0.2,store=0.2,title=0.1,path=0.05"
+search:
+  fnbg:  [0.6, 0.7, 0.85]
+  tfidf: [0.3, 0.35]
+rounds: 1
+save_best: configs/blend_best.yaml

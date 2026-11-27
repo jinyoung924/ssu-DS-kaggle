@@ -13,9 +13,11 @@ def topk(scores: np.ndarray, k: int) -> np.ndarray:
 class Recommender:
     best_epoch = None  # early stopping을 쓰는 모델만 채움
 
-    def fit(self, X: sp.csr_matrix, eval_fn=None):
+    def fit(self, X: sp.csr_matrix, eval_fn=None, ctx=None):
+        """ctx: X 외의 정보가 필요한 모델용. {"df": 학습 interaction df, "enc": Encoder, "stage": "valid"|"full"}"""
         self.n_users, self.n_items = X.shape
         self.popularity = np.asarray(X.sum(axis=0)).ravel().astype(np.float32)
+        self.ctx = ctx or {}
         self._fit(X, eval_fn)
         return self
 

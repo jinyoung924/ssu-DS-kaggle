@@ -1,0 +1,33 @@
+# Step 2 (H2): Ordering Artifact 파일 이웃 점수 - window / weight / kernel / 방향 / 다중 window
+components:
+  ease:    {model: ease, params: {reg: 500.0, max_items: null}}
+  fnb5:    {model: fileorder, params: {window: 5}}
+  fnb10:   {model: fileorder, params: {window: 10}}
+  fnb20:   {model: fileorder, params: {window: 20}}
+  fnb30:   {model: fileorder, params: {window: 30}}
+  fnb50:   {model: fileorder, params: {window: 50}}
+  gauss20: {model: fileorder, params: {window: 50, kernel: gauss, sigma: 20}}
+  tri40:   {model: fileorder, params: {window: 40, kernel: tri}}
+  prev20:  {model: fileorder, params: {window: 20, side: prev}}
+  next20:  {model: fileorder, params: {window: 20, side: next}}
+evaluate:
+  ease:            "ease=1"
+  w10_g0.2:        "ease=1,fnb10=0.2"
+  w10_g0.3:        "ease=1,fnb10=0.3"
+  w20_g0.25:       "ease=1,fnb20=0.25"
+  w20_g0.3:        "ease=1,fnb20=0.3"
+  w20_g0.35:       "ease=1,fnb20=0.35"
+  w20_g0.4:        "ease=1,fnb20=0.4"
+  w30_g0.3:        "ease=1,fnb30=0.3"
+  w30_g0.4:        "ease=1,fnb30=0.4"
+  w50_g0.3:        "ease=1,fnb50=0.3"
+  w50_g0.4:        "ease=1,fnb50=0.4"
+  gauss20_g0.3:    "ease=1,gauss20=0.3"
+  gauss20_g0.4:    "ease=1,gauss20=0.4"
+  tri40_g0.3:      "ease=1,tri40=0.3"
+  tri40_g0.4:      "ease=1,tri40=0.4"
+  prev20_g0.3:     "ease=1,prev20=0.3"
+  next20_g0.3:     "ease=1,next20=0.3"
+  multi_5+30:      "ease=1,fnb5=0.1,fnb30=0.25"
+  multi_5+50:      "ease=1,fnb5=0.15,fnb50=0.25"
+  multi_10+50:     "ease=1,fnb10=0.15,fnb50=0.25"

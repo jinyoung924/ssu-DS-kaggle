@@ -29,6 +29,9 @@ uv run kaggle competitions download -c ssu-data-science-amazon-top-k-recommendat
 # 1. 로컬 validation 실험 -> experiments.csv에 valid Recall@20 기록
 uv run python -m src.train --config configs/ease.yaml --name reg500
 
+# 1-1. blend 가중치 탐색 (component는 한 번만 학습) -> configs/blend_*.yaml
+uv run python -m scripts.tune_blend configs/tune/final_artifact.yaml
+
 # 2. 괜찮은 run을 train 전체로 재학습 -> outputs/submissions/<run_id>.csv
 uv run python -m src.predict --from-run <run_id>
 
@@ -61,21 +64,38 @@ split을 바꾸면 이전 run과 점수를 직접 비교할 수 없으니 note�
 | `itemknn.yaml` | item-item cosine CF |
 | `ease.yaml` | EASE, item 수가 많으면 `max_items`로 후보 제한 |
 | `lightgcn.yaml` | LightGCN + BPR, `eval_every`마다 valid 측정 후 early stopping |
+| `blend_best.yaml` | 최종 blend (Ordering Artifact 사용). `scripts/tune_blend.py`가 생성 |
+| `blend_noartifact.yaml` | Artifact 없는 최고 blend (보고서 비교용) |
+
+blend에 쓰는 component (`src/models/`, 실험 근거는 `11-27_exp.md`):
+
+| model | 설명 |
+|---|---|
+| `easetime` | EASE의 Gram을 시간 감쇠로 가중 (`tau_days`) |
+| `fileorder` | Ordering Artifact: `train_reviews.jsonl`에서 가까이 등장한 유저들의 구매 빈도 |
+| `textsim` | 상품 텍스트 유사도. `source: tfidf`(로컬) 또는 `emb`(kaggle/에서 만든 임베딩) |
+| `affinity` | 유저의 브랜드/카테고리 분포 x 인기도 |
+| `itemknn`, `rp3beta`, `poscooc`, `alive` | item 유사도 / 파일 위치 유사도 / 활동 기간 필터 (`poscooc`, `alive`, `rp3beta`는 효과 없음) |
+| `precomputed` | kaggle/lightgcn_gpu.py가 GPU로 학습한 임베딩 |
 
 새 모델 추가: `src/models/base.py`의 `Recommender`를 상속해 `_fit`, `score`를 구현하고 `src/models/__init__.py`의 `build_model`에 등록.
 
 ## Structure
 
 ```
-configs/          실험별 hyperparameter
+configs/          실험별 hyperparameter (tune/: blend 가중치 탐색 spec)
 data/raw/         대회 원본 (git 제외)
-data/processed/   split 캐시
+data/processed/   split, 메타데이터, 파일 순서 캐시
+data/external/    kaggle/에서 받은 GPU 결과 (git 제외)
+kaggle/           Kaggle GPU용 스크립트 (LightGCN, 텍스트 임베딩)
+scripts/          tune_blend.py (blend 가중치 탐색)
 notebooks/        EDA
 src/
   data.py         로드, id <-> index 매핑, interaction matrix
+  features.py     메타데이터, 리뷰 파일의 유저 등장 순서
   split.py        로컬 validation split
   metrics.py      Recall@K (대회 정의)
-  models/         Popular, ItemKNN, EASE, LightGCN
+  models/         Popular, ItemKNN, EASE, LightGCN, blend component들
   train.py        validation 실험
   predict.py      전체 재학습 + submission 생성
   validate_sub.py submission 포맷 검사

@@ -40,12 +40,13 @@ class Encoder:
     """raw user_id/item_id를 0..n-1 index로 매핑.
 
     user: train + test user 전체, item: train에 등장한 item 전체 (= 추천 후보).
+    id를 정렬해서 매핑하므로 id가 0..n-1로 연속이면 index == id (메타데이터를 붙일 때 실수 방지).
     """
 
     def __init__(self, train_df: pd.DataFrame, test_users: np.ndarray):
         all_users = np.concatenate([train_df["user_id"].to_numpy(), np.asarray(test_users)])
-        self.users = pd.Index(pd.unique(all_users))
-        self.items = pd.Index(pd.unique(train_df["item_id"].to_numpy()))
+        self.users = pd.Index(np.sort(pd.unique(all_users)))
+        self.items = pd.Index(np.sort(pd.unique(train_df["item_id"].to_numpy())))
 
     @property
     def n_users(self):
