@@ -1,13 +1,17 @@
 """2단계 추천 v2: blend 후보 top-N을 LightGBM으로 재정렬. 여러 split으로 학습 데이터를 늘린다 (개선안_01.md 축 B).
 
   # 검증: seed 1~4 split으로 학습, seed 42 split(기존 로컬 검증)으로 평가
-  python -m scripts.rerank2 --config configs/blend_best.yaml --train-seeds 1 2 3 4 --eval-seed 42
-  # 제출: seed 42까지 포함해 학습하고 train 전체로 만든 후보를 재정렬
-  python -m scripts.rerank2 --config configs/blend_best.yaml --train-seeds 1 2 3 4 --eval-seed 42 --submit
+  python -m scripts.rerank2 --config configs/blend_best.yaml --train-seeds 1 2 3 4 --eval-seeds 42
+  # 평가 split 3개: 각 seed를 차례로 평가 split으로 두고 나머지 split 전체로 학습해 평균 (개선 계획_02.md)
+  python -m scripts.rerank2 --config configs/rerank_v3.yaml --train-seeds 3 4 5 6 7 8 --eval-seeds 42 1 2 --compare <run_id>
+  # 제출: 평가 split까지 모두 학습에 쓰고 train 전체로 만든 후보를 재정렬
+  python -m scripts.rerank2 --config configs/blend_best.yaml --train-seeds 1 2 3 4 --eval-seeds 42 --submit
+  # --bags N: 유저 묶음 나누기와 LightGBM seed를 바꿔 N번 학습해 평균. 현재 최고 설정의 전체 명령은 개선 계획_02.md 4-2
 
 v1(scripts/rerank.py)이 실패한 이유: 정답이 split 하나의 6,781개뿐이라 GBDT가 blend보다 못 배웠다.
 v2: split마다 component를 다시 학습해 후보와 feature를 만들고(data/processed/rerank/에 캐시), 정답을 split 수만큼 늘린다.
 각 split의 valid는 그 split의 train에 없는 아이템이므로, test 상황(정답은 train에 없음)과 같다.
+--extra로 고른 추가 feature 묶음은 기존 캐시를 다시 만들지 않도록 split마다 따로 캐시한다.
 """
 import argparse
 import os
@@ -254,37 +258,124 @@ def split_features(cfg, cfg_tag, seed, n_cand, df, enc, test_users, nested_of=No
     return cand, F, y, users, names, gt_n
 
 
-def gather(parts, seeds, user_mask, N, keep, objective, neg_rate, rng):
-    """여러 split에서 user_mask 유저의 행만 모은다. binary는 오답을 neg_rate만큼 샘플링
-    (유저 안 점수 순위는 그대로), lambdarank는 정답이 있는 유저(그룹)만 남긴다 (정답 없는 그룹은 gradient 0)."""
+def sd_features(tr, enc, users, cand, batch=1024):
+    """같은 날 동시구매 (개선 계획_02.md 2-2): 같은 날 쓴 리뷰는 같은 주문으로 받은 상품일 가능성이 높다.
+    리뷰의 38%가 같은 날 다른 리뷰와 함께 있고, 정답의 26%가 유저의 train 아이템과 '다른 유저가 같은 날 함께 산' 관계로 이어진다."""
+    X = enc.matrix(tr).tocsr()
+    n_u, n_i = X.shape
+    u, i = enc.user_index(tr["user_id"]), enc.item_index(tr["item_id"])
+    bk = pd.factorize(pd.Series(u.astype(np.int64) * 10 ** 6 + tr["timestamp"].to_numpy() // DAY))[0]
+    B = sp.csr_matrix((np.ones(len(bk), np.float32), (bk, i)), shape=(int(bk.max()) + 1, n_i))
+    B.data[:] = 1.0
+    C_sd = (B.T @ B).tocsr()  # 같은 날 함께 산 유저 수 (희소)
+    C_sd.setdiag(0)
+    C_sd.eliminate_zeros()
+    C_all = (X.T @ X).tocsr()  # 기간과 무관하게 함께 산 유저 수
+    C_all.setdiag(0)
+    C_all.eliminate_zeros()
+    r = sp.diags((1.0 / np.sqrt(np.maximum(np.asarray(X.sum(axis=0)).ravel(), 1))).astype(np.float32))
+    C_cos = (r @ C_sd @ r).toarray().astype(np.float32)  # 최대값 조회용으로만 dense
+    sizes = np.bincount(bk)
+    u_basket = (np.bincount(u, weights=(sizes[bk] >= 2), minlength=n_u)
+                / np.maximum(np.bincount(u, minlength=n_u), 1)).astype(np.float32)
+    out = np.zeros((len(users), cand.shape[1], 5), np.float32)
+    for s in range(0, len(users), batch):
+        ub, cb = users[s:s + batch], cand[s:s + batch]
+        rows = np.arange(len(ub))[:, None]
+        Xu = X[ub]
+        ssd = (Xu @ C_sd).toarray()[rows, cb]
+        sall = (Xu @ C_all).toarray()[rows, cb]
+        lens = np.diff(Xu.indptr)
+        mask = np.arange(int(lens.max()))[None, :] < lens[:, None]
+        pad = np.zeros(mask.shape, np.int64)
+        pad[mask] = Xu.indices
+        V = np.where(mask[:, :, None], C_cos[pad[:, :, None], cb[:, None, :]], 0.0)
+        o = out[s:s + len(ub)]
+        o[..., 0] = ssd
+        o[..., 1] = V.sum(axis=1)
+        o[..., 2] = V.max(axis=1)
+        o[..., 3] = ssd / np.maximum(sall, 1.0)
+        o[..., 4] = u_basket[ub][:, None]
+    return out.reshape(-1, 5), ["sd_sum", "sd_cos", "sd_max", "sd_frac", "u_basket"]
+
+
+EXTRA_FN = {"sd": sd_features}
+EXTRA_V = 1  # 추가 feature 계산을 바꾸면 올린다 (캐시 파일 이름에 들어감)
+
+
+def extra_block(groups, tag, seed, N, df, enc, cand, users, nested_of=None):
+    """추가 feature 묶음을 split마다 따로 계산해 캐시한다. seed="full"이면 train 전체(제출용)."""
+    blocks, names = [np.zeros((cand.size, 0), np.float32)], []
+    nest = f"_nest{nested_of}" if nested_of is not None else ""
+    for g in groups:
+        path = CACHE / f"{tag}_N{N}_x{g}{EXTRA_V}{nest}_s{seed}.npz"
+        if path.exists():
+            z = np.load(path, allow_pickle=True)
+            Fx, nx = z["F"], list(z["names"])
+        else:
+            t = time.time()
+            if seed == "full":
+                tr = df
+            else:
+                d = df if nested_of is None else get_split(df, **{**DEFAULTS["split"], "seed": nested_of})[0]
+                tr = get_split(d, **{**DEFAULTS["split"], "seed": seed})[0]
+            Fx, nx = EXTRA_FN[g](tr, enc, users, cand)
+            np.savez(path, F=Fx, names=np.array(nx))
+            print(f"  [extra {g}, seed {seed}] {Fx.shape} ({time.time() - t:.0f}s)", flush=True)
+        blocks.append(Fx)
+        names += nx
+    return np.hstack(blocks), names
+
+
+def train_part(F, Fx, y, N, objective, neg_rate, rng):
+    """학습에 쓸 행만 메모리에 남긴다. lambdarank는 정답이 있는 유저(그룹)만 (정답 없는 그룹은 gradient 0),
+    binary는 오답을 neg_rate만큼 샘플링 (유저 안 점수 순위는 그대로)."""
+    if objective == "lambdarank":
+        ur = np.flatnonzero(y.sum(axis=1) > 0)
+        rows = (ur[:, None] * N + np.arange(N)).ravel()
+    else:
+        yr = y.ravel()
+        rows = np.arange(len(yr)) if neg_rate >= 1.0 else np.flatnonzero((yr > 0) | (rng.random(len(yr)) < neg_rate))
+    return {"F": np.hstack([F[rows], Fx[rows]]), "y": y.ravel()[rows], "u": rows // N}
+
+
+def gather(tparts, seeds, user_mask, keep, objective, N):
+    """여러 split의 학습 행 중 user_mask 유저의 행만 모은다."""
     Fs, ys, group = [], [], []
     for s in seeds:
-        F, y = parts[s][1], parts[s][2].ravel()
+        p = tparts[s]
+        sel = user_mask[p["u"]]
+        Fs.append(p["F"][sel][:, keep])
+        ys.append(p["y"][sel])
         if objective == "lambdarank":
-            sel = user_mask & (parts[s][2].sum(axis=1) > 0)
-            r = np.repeat(sel, N)
-            group += [N] * int(sel.sum())
-        else:
-            r = np.repeat(user_mask, N)
-            if neg_rate < 1.0:
-                r &= (y > 0) | (rng.random(len(y)) < neg_rate)
-        idx = np.flatnonzero(r)
-        Fs.append(F[idx][:, keep])
-        ys.append(y[idx])
+            group += [N] * int(sel.sum() // N)
     return np.vstack(Fs), np.concatenate(ys), (group or None)
 
 
-def recall_from_scores(pred, cand, y, gt_n, k=20):
+def partition(n_users, K, seed):
+    """유저 K묶음과 early stopping 유저(10%). seed 0은 개선안_01.md의 결과와 같은 나누기."""
+    rng = np.random.default_rng(seed)
+    return rng.integers(0, K, n_users), rng.random(n_users) < 0.1
+
+
+def user_hits(pred, cand, y, k=20):
     order = np.argsort(-pred.reshape(cand.shape), axis=1, kind="stable")[:, :k]
-    hits = np.take_along_axis(y, order, axis=1).sum()
-    return hits / np.minimum(gt_n, k).sum()
+    return np.take_along_axis(y, order, axis=1).sum(axis=1).astype(np.int16)
 
 
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--config", required=True)
     ap.add_argument("--train-seeds", type=int, nargs="+", default=[1, 2, 3, 4])
-    ap.add_argument("--eval-seed", type=int, default=42)
+    ap.add_argument("--eval-seeds", type=int, nargs="+", default=[42],
+                    help="평가 split. 여러 개면 각 seed를 차례로 평가 split으로 두고, 나머지 split 전체(train-seeds + 다른 "
+                         "평가 seed)로 학습해 평균한다. 학습 split 수는 같게 유지된다")
+    ap.add_argument("--eval-seed", type=int, default=None, help=argparse.SUPPRESS)  # 이전 명령 호환
+    ap.add_argument("--extra", default="", help="추가 feature 묶음 (쉼표 구분). sd: 같은 날 동시구매")
+    ap.add_argument("--bags", type=int, default=1,
+                    help="유저 묶음 나누기와 LightGBM seed만 바꿔 B번 학습하고 예측을 평균 (같은 모델의 분산 줄이기)")
+    ap.add_argument("--seed", type=int, default=0, help="유저 묶음 나누기와 LightGBM의 seed (bag b는 seed + b)")
+    ap.add_argument("--compare", default=None, help="이 run id와 같은 평가 split에서 유저별 적중 차이와 표준오차를 출력")
     ap.add_argument("--cands", type=int, default=100)
     ap.add_argument("--rounds", type=int, default=3000)
     ap.add_argument("--neg-rate", type=float, default=1.0,
@@ -311,79 +402,129 @@ def main():
     df = data.load_train()
     test_users = data.load_test_users()
     enc = data.Encoder(df, test_users)
-    if args.build_only is not None:
+    extras = [g for g in args.extra.split(",") if g]
+    if args.build_only is not None:  # --extra를 주면 추가 feature 캐시도 만든다
         for s in args.build_only:
-            split_features(cfg, tag, s, N, df, enc, test_users, nested_of=args.nested_of)
+            cand, _, _, u_s, _, _ = split_features(cfg, tag, s, N, df, enc, test_users, nested_of=args.nested_of)
+            extra_block(extras, tag, s, N, df, enc, cand, u_s, nested_of=args.nested_of)
         return
-    parts = {s: split_features(cfg, tag, s, N, df, enc, test_users, nested_of=args.nested_of)
-             for s in args.train_seeds}
-    parts[args.eval_seed] = split_features(cfg, tag, args.eval_seed, N, df, enc, test_users)
     if args.nested_of is not None and args.submit:
         raise SystemExit("--nested-of는 검증 전용 (--submit과 같이 쓰지 않음)")
-    names = parts[args.eval_seed][4]
+    eval_seeds = [args.eval_seed] if args.eval_seed is not None else args.eval_seeds
+    # 평가 split마다 나머지 split 전체로 학습한다. --nested-of면 평가 split은 nested가 아니므로 학습에 쓰지 않는다.
+    pool = list(dict.fromkeys([*args.train_seeds, *eval_seeds]))
+    train_seeds_of = {e: (list(args.train_seeds) if args.nested_of is not None else [s for s in pool if s != e])
+                      for e in eval_seeds}
+    rng_load = np.random.default_rng(1)
+    tparts, eparts, users, names = {}, {}, None, None
+    for s in pool:
+        loads = []
+        if s in args.train_seeds:
+            loads.append(args.nested_of)
+        if s in eval_seeds and (args.nested_of is not None or not loads):
+            loads.append(None)
+        for nest in dict.fromkeys(loads):
+            cand, F, y, u_s, nm, gt_n = split_features(cfg, tag, s, N, df, enc, test_users, nested_of=nest)
+            Fx, nx = extra_block(extras, tag, s, N, df, enc, cand, u_s, nested_of=nest)
+            if users is None:
+                users, names = u_s, nm + nx
+            assert (u_s == users).all() and nm + nx == names, "split마다 유저 순서와 feature가 같아야 함"
+            if s in eval_seeds and nest is None:
+                eparts[s] = {"cand": cand, "F": F, "Fx": Fx, "y": y, "gt_n": gt_n}
+            if s in args.train_seeds and nest == args.nested_of or args.nested_of is None:
+                tparts[s] = train_part(F, Fx, y, N, args.objective, args.neg_rate, rng_load)
+            del F, Fx
     drop = [d for d in args.drop.split(",") if d]
     keep = [j for j, n in enumerate(names) if n not in drop]
     names_k = [names[j] for j in keep]
-    users = parts[args.eval_seed][3]
-    assert all((parts[s][3] == users).all() for s in parts), "split마다 유저 순서가 같아야 함"
     n_users = len(users)
+    n_base = len(names) - (eparts[eval_seeds[0]]["Fx"].shape[1])
 
     params = {**PARAMS, "learning_rate": args.lr, "num_leaves": args.leaves, "min_data_in_leaf": args.min_leaf}
     if args.objective == "lambdarank":
         params.update(objective="lambdarank", metric="ndcg", ndcg_eval_at=[20], lambdarank_truncation_level=40)
     # 같은 유저의 (유저, 아이템) 정답 쌍이 여러 split에 나오므로, 평가 유저는 학습에서 완전히 뺀다.
     # early stopping 유저도 모든 split에서 학습에서 뺀다.
-    rng = np.random.default_rng(0)
-    fold = rng.integers(0, K, n_users)
-    es_flag = rng.random(n_users) < 0.1
-    cand_e, F_e, y_e, _, _, gt_e = parts[args.eval_seed]
-    pred = np.zeros(len(F_e), np.float64)
-    best_iters, imp = [], np.zeros(len(names_k))
-    for f in range(K):
-        Ftr, ytr, gtr = gather(parts, args.train_seeds, (fold != f) & ~es_flag, N, keep, args.objective,
-                               args.neg_rate, rng)
-        Fes, yes, ges = gather(parts, args.train_seeds, (fold != f) & es_flag, N, keep, args.objective, 1.0, rng)
-        dtr = lgb.Dataset(Ftr, ytr, group=gtr, feature_name=names_k, free_raw_data=True)
-        des = lgb.Dataset(Fes, yes, group=ges, reference=dtr, feature_name=names_k, free_raw_data=True)
-        model = lgb.train(params, dtr, num_boost_round=args.rounds, valid_sets=[des],
-                          callbacks=[lgb.early_stopping(100, verbose=False)])
-        rows = np.repeat(fold == f, N)
-        pred[rows] = model.predict(F_e[rows][:, keep], num_iteration=model.best_iteration)
-        best_iters.append(model.best_iteration)
-        imp += model.feature_importance("gain")
-        print(f"  fold {f}: train rows {len(ytr)} (pos {int(ytr.sum())}), best_iter {model.best_iteration} "
-              f"({time.time() - t0:.0f}s)", flush=True)
-        del Ftr, ytr, Fes, yes, dtr, des
-    r_rerank = recall_from_scores(pred, cand_e, y_e, gt_e, k)
-    r_blend = y_e[:, :k].sum() / np.minimum(gt_e, k).sum()
-    imp = pd.Series(imp, index=names_k).sort_values(ascending=False)
-    print(f"\n[eval seed {args.eval_seed}, {K}-fold by user] Recall@{k}: blend {r_blend:.5f} -> rerank {r_rerank:.5f} "
-          f"(best_iter {best_iters}, {time.time() - t0:.0f}s)")
-    print("top features (gain): " + ", ".join(f"{n} {v / imp.sum():.3f}" for n, v in imp.head(15).items()))
     run_id = make_run_id("rerank2", f"N{N}")
+    best_iters, imp, per_seed, blend_seed = [], np.zeros(len(names_k)), {}, {}
+    for e in eval_seeds:
+        ep = eparts[e]
+        den = np.minimum(ep["gt_n"], k).sum()
+        pred = np.zeros(ep["cand"].size, np.float64)
+        for b in range(args.bags):
+            fold, es_flag = partition(n_users, K, args.seed + b)
+            prm = {**params, "seed": args.seed + b}
+            for f in range(K):
+                Ftr, ytr, gtr = gather(tparts, train_seeds_of[e], (fold != f) & ~es_flag, keep, args.objective, N)
+                Fes, yes, ges = gather(tparts, train_seeds_of[e], (fold != f) & es_flag, keep, args.objective, N)
+                dtr = lgb.Dataset(Ftr, ytr, group=gtr, feature_name=names_k, free_raw_data=True)
+                des = lgb.Dataset(Fes, yes, group=ges, reference=dtr, feature_name=names_k, free_raw_data=True)
+                model = lgb.train(prm, dtr, num_boost_round=args.rounds, valid_sets=[des],
+                                  callbacks=[lgb.early_stopping(100, verbose=False)])
+                rows = np.flatnonzero(np.repeat(fold == f, N))
+                Xe = np.hstack([ep["F"][rows], ep["Fx"][rows]])[:, keep]
+                pred[rows] += model.predict(Xe, num_iteration=model.best_iteration) / args.bags
+                best_iters.append(model.best_iteration)
+                imp += model.feature_importance("gain")
+                print(f"  [eval {e}] bag {b} fold {f}: train rows {len(ytr)} (pos {int(ytr.sum())}), "
+                      f"best_iter {model.best_iteration} ({time.time() - t0:.0f}s)", flush=True)
+                del Ftr, ytr, Fes, yes, dtr, des, Xe
+        hits = user_hits(pred, ep["cand"], ep["y"], k)
+        per_seed[e] = float(hits.sum() / den)
+        blend_seed[e] = float(ep["y"][:, :k].sum() / den)
+        np.save(CACHE / f"hits_{run_id}_s{e}.npy", hits)
+        np.save(CACHE / (f"pred_{run_id}_eval.npy" if e == 42 else f"pred_{run_id}_eval_s{e}.npy"),
+                pred.astype(np.float32))  # 앙상블 평가용 (scripts/rerank_ens.py는 seed 42)
+        print(f"[eval seed {e}, {K}-fold by user, {args.bags} bag] Recall@{k}: blend {blend_seed[e]:.5f} -> "
+              f"rerank {per_seed[e]:.5f} ({time.time() - t0:.0f}s)", flush=True)
+    r_mean = float(np.mean(list(per_seed.values())))
+    imp = pd.Series(imp, index=names_k).sort_values(ascending=False)
+    print(f"\nRecall@{k} by eval seed: " + ", ".join(f"{e}: {r:.5f}" for e, r in per_seed.items())
+          + f" | mean {r_mean:.5f} (blend {np.mean(list(blend_seed.values())):.5f}), best_iter {best_iters}")
+    print("top features (gain): " + ", ".join(f"{n} {v / imp.sum():.3f}" for n, v in imp.head(15).items()))
+    print(f"run id: {run_id}")
+    if args.compare:
+        diffs, ses = [], []
+        for e in eval_seeds:
+            ref = CACHE / f"hits_{args.compare}_s{e}.npy"
+            if not ref.exists():
+                print(f"  compare: {ref.name} 없음")
+                continue
+            d = np.load(CACHE / f"hits_{run_id}_s{e}.npy").astype(np.float64) - np.load(ref)
+            den = np.minimum(eparts[e]["gt_n"], k).sum()
+            diffs.append(d.sum() / den)
+            ses.append(d.std() * np.sqrt(len(d)) / den)
+            print(f"  vs {args.compare} [seed {e}]: {diffs[-1]:+.5f} (짝지은 표준오차 {ses[-1]:.5f})")
+        if diffs:
+            m, se = np.mean(diffs), np.sqrt(np.sum(np.square(ses))) / len(ses)
+            print(f"  vs {args.compare} [평균]: {m:+.5f} ± {se:.5f} (z={m / se:+.2f}, split 사이 독립 가정)")
     experiments.append(run_id, "valid", "rerank2",
-                       {"config": args.config, "cands": N, "train_seeds": args.train_seeds, "folds": K,
-                        "best_iter": best_iters, "objective": args.objective, "neg_rate": args.neg_rate, "lr": args.lr,
-                        "leaves": args.leaves, "min_leaf": args.min_leaf, "drop": drop, "feat_v": FEAT_V,
-                        "blend_valid": round(float(r_blend), 5)}, "random", float(r_rerank), args.note)
+                       {"config": args.config, "cands": N, "train_seeds": args.train_seeds, "eval_seeds": eval_seeds,
+                        "per_seed": {str(e): round(r, 5) for e, r in per_seed.items()}, "folds": K,
+                        "bags": args.bags, "seed": args.seed, "extra": extras, "best_iter": best_iters,
+                        "objective": args.objective, "neg_rate": args.neg_rate, "lr": args.lr, "leaves": args.leaves,
+                        "min_leaf": args.min_leaf, "drop": drop, "feat_v": FEAT_V,
+                        "blend_valid": round(float(np.mean(list(blend_seed.values()))), 5)},
+                       "random", r_mean, args.note)
     (data.OUTPUTS / "tune").mkdir(parents=True, exist_ok=True)
     imp.to_csv(data.OUTPUTS / "tune" / f"{run_id}_importance.csv", header=["gain"])
-    np.save(CACHE / f"pred_{run_id}_eval.npy", pred.astype(np.float32))  # 앙상블 평가용 (scripts/rerank_ens.py)
 
     if not args.submit:
         return
-    # 제출: eval seed까지 모든 split을 쓰되, 유저 묶음 k의 test 추천은 그 유저를 학습에 쓰지 않은 모델로 만든다
+    # 제출: 평가 split까지 모든 split을 쓰되, 유저 묶음 k의 test 추천은 그 유저를 학습에 쓰지 않은 모델로 만든다
     # (같은 유저로 학습하면 test 정답이 학습 split에서 '오답'으로 외워져 불리해짐).
-    seeds = [*args.train_seeds, args.eval_seed]
     n_iter = int(np.mean(best_iters) * 1.1)
     models = []
-    for f in range(K):  # 최종 모델을 먼저 학습하고 split feature를 지운 뒤 test feature를 만든다 (메모리)
-        Ftr, ytr, gtr = gather(parts, seeds, fold != f, N, keep, args.objective, args.neg_rate, rng)
-        models.append(lgb.train(params, lgb.Dataset(Ftr, ytr, group=gtr, feature_name=names_k),
-                                num_boost_round=n_iter))
-        print(f"  final fold {f}: {len(seeds)} splits, {n_iter} rounds ({time.time() - t0:.0f}s)", flush=True)
-        del Ftr, ytr
-    del parts, F_e, cand_e, y_e
+    for b in range(args.bags):  # 최종 모델을 먼저 학습하고 split feature를 지운 뒤 test feature를 만든다 (메모리)
+        fold, _ = partition(n_users, K, args.seed + b)
+        for f in range(K):
+            Ftr, ytr, gtr = gather(tparts, pool, fold != f, keep, args.objective, N)
+            models.append((fold, f, lgb.train({**params, "seed": args.seed + b},
+                                              lgb.Dataset(Ftr, ytr, group=gtr, feature_name=names_k),
+                                              num_boost_round=n_iter)))
+            print(f"  final bag {b} fold {f}: {len(pool)} splits, {n_iter} rounds ({time.time() - t0:.0f}s)", flush=True)
+            del Ftr, ytr
+    del tparts, eparts, ep, pred
     tu = enc.user_index(test_users)
     full_path = CACHE / f"{tag}_N{N}_f{FEAT_V}_full.npz"
     if full_path.exists():
@@ -394,11 +535,14 @@ def main():
         cand, F, _ = build(fb, tu, N)
         del fb
         np.savez(full_path, cand=cand.astype(np.int32), F=F)
+    assert F.shape[1] == n_base, "train 전체 feature 캐시의 열 수가 split 캐시와 다름"
+    Fx, _ = extra_block(extras, tag, "full", N, df, enc, cand, tu)
     pred = np.zeros(cand.shape, np.float64)
-    tu_fold = fold[np.searchsorted(users, tu)]
-    for f, model in enumerate(models):
-        sel = tu_fold == f
-        pred[sel] = model.predict(F[np.repeat(sel, N)][:, keep]).reshape(-1, N)
+    tu_pos = np.searchsorted(users, tu)
+    for fold, f, model in models:
+        sel = fold[tu_pos] == f
+        rows = np.flatnonzero(np.repeat(sel, N))
+        pred[sel] += model.predict(np.hstack([F[rows], Fx[rows]])[:, keep]).reshape(-1, N) / args.bags
     np.save(CACHE / f"pred_{run_id}_test.npy", pred.astype(np.float32))
     rec = np.take_along_axis(cand, np.argsort(-pred, axis=1, kind="stable")[:, :k], axis=1)
     item_ids = enc.items.to_numpy()[rec]
@@ -406,10 +550,12 @@ def main():
     out.parent.mkdir(parents=True, exist_ok=True)
     pd.DataFrame({"user_id": test_users, "item_id": [" ".join(map(str, row)) for row in item_ids]}).to_csv(out, index=False)
     experiments.append(run_id, "submit", "rerank2", {"config": args.config, "cands": N, "n_iter": n_iter,
-                                                     "train_seeds": seeds}, "full", None,
+                                                     "train_seeds": pool, "bags": args.bags, "extra": extras},
+                       "full", None,
                        args.note or f"rerank2 of {args.config}")
     errors = check(out, k=k)
     print(f"\nsubmission: {out}\n" + ("format OK" if not errors else "format ERROR:\n  " + "\n  ".join(errors)))
+    print("제출 전: MMDD_NN_<strategy>.csv로 이름을 바꾸고 outputs/submissions/README.md 표에 한 줄 추가")
     print(f"제출 후: python -m src.experiments lb {run_id} <public score>  ({time.time() - t0:.0f}s)")
 
 

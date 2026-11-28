@@ -65,6 +65,7 @@ def main():
     errors = check(out, k=k)
     print(f"\nsubmission: {out}")
     print("format OK" if not errors else "format ERROR:\n  " + "\n  ".join(errors))
+    print("제출 전: MMDD_NN_<strategy>.csv로 이름을 바꾸고 outputs/submissions/README.md 표에 한 줄 추가")
     print(f"제출 후: python -m src.experiments lb {run_id} <public score>")
 
 

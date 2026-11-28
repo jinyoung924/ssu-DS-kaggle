@@ -9,6 +9,7 @@ data/external/*
 # submission csv는 용량 때문에 제외, run 기록(config/metrics)은 공유
 outputs/submissions/*
 !outputs/submissions/.gitkeep
+!outputs/submissions/README.md
 outputs/runs/*/recs.npy
 
 # env
