@@ -1,0 +1,15 @@
+stage,combo,weights,recall@20
+evaluate,only_ceasea,"{""ceasea"": 1.0}",0.06981
+evaluate,init,"{""ceasea"": 1.0, ""fnbg"": 0.5, ""tfidf"": 0.1, ""itemknn"": 0.3, ""cat"": 0.2, ""title"": 0.1, ""path"": 0.05}",0.07123
+r1,fnbg=0.1,"{""ceasea"": 1.0, ""fnbg"": 0.1, ""tfidf"": 0.1, ""itemknn"": 0.3, ""cat"": 0.2, ""title"": 0.1, ""path"": 0.05}",0.07114
+r1,fnbg=0.25,"{""ceasea"": 1.0, ""fnbg"": 0.25, ""tfidf"": 0.1, ""itemknn"": 0.3, ""cat"": 0.2, ""title"": 0.1, ""path"": 0.05}",0.07273
+r1,fnbg=0.35,"{""ceasea"": 1.0, ""fnbg"": 0.35, ""tfidf"": 0.1, ""itemknn"": 0.3, ""cat"": 0.2, ""title"": 0.1, ""path"": 0.05}",0.07236
+r1,itemknn=0,"{""ceasea"": 1.0, ""fnbg"": 0.25, ""tfidf"": 0.1, ""itemknn"": 0.0, ""cat"": 0.2, ""title"": 0.1, ""path"": 0.05}",0.07063
+r1,itemknn=0.15,"{""ceasea"": 1.0, ""fnbg"": 0.25, ""tfidf"": 0.1, ""itemknn"": 0.15, ""cat"": 0.2, ""title"": 0.1, ""path"": 0.05}",0.07185
+r1,tfidf=0,"{""ceasea"": 1.0, ""fnbg"": 0.25, ""tfidf"": 0.0, ""itemknn"": 0.3, ""cat"": 0.2, ""title"": 0.1, ""path"": 0.05}",0.0724
+r1,tfidf=0.05,"{""ceasea"": 1.0, ""fnbg"": 0.25, ""tfidf"": 0.05, ""itemknn"": 0.3, ""cat"": 0.2, ""title"": 0.1, ""path"": 0.05}",0.07253
+r1,cat=0.1,"{""ceasea"": 1.0, ""fnbg"": 0.25, ""tfidf"": 0.1, ""itemknn"": 0.3, ""cat"": 0.1, ""title"": 0.1, ""path"": 0.05}",0.07262
+r1,cat=0.3,"{""ceasea"": 1.0, ""fnbg"": 0.25, ""tfidf"": 0.1, ""itemknn"": 0.3, ""cat"": 0.3, ""title"": 0.1, ""path"": 0.05}",0.07247
+r1,title=0,"{""ceasea"": 1.0, ""fnbg"": 0.25, ""tfidf"": 0.1, ""itemknn"": 0.3, ""cat"": 0.2, ""title"": 0.0, ""path"": 0.05}",0.0726
+r1,title=0.05,"{""ceasea"": 1.0, ""fnbg"": 0.25, ""tfidf"": 0.1, ""itemknn"": 0.3, ""cat"": 0.2, ""title"": 0.05, ""path"": 0.05}",0.07268
+r1,path=0,"{""ceasea"": 1.0, ""fnbg"": 0.25, ""tfidf"": 0.1, ""itemknn"": 0.3, ""cat"": 0.2, ""title"": 0.1, ""path"": 0.0}",0.0724

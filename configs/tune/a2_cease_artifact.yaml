@@ -1,0 +1,23 @@
+# 개선안_01 방법 C-2: CEASE-EDLAE에 Ordering Artifact(파일 위치 구간 Gram)까지 결합한 모델로 blend 가중치를 다시 맞춘다.
+#   uv run python -m scripts.tune_blend configs/tune/a2_cease_artifact.yaml
+# CEASE-A 단독 0.0698 (구간 12, γ 0.05. CEASE-EDLAE 0.0616). Artifact가 모델 안에 들어갔으므로 파일 이웃 component 비중은 줄어들 것으로 예상.
+components:
+  ceasea:    {model: cease, params: {reg: 250.0, tau_days: 365, reg_pop: 0.3, alpha: 5.0, beta: 3.0, pos_gamma: 0.05, pos_bin: 12}}
+  fnbg:      {model: fileorder, params: {window: 50, kernel: gauss, sigma: 20}}
+  tfidf:     {model: textsim, params: {source: tfidf, field: text, k: 50}}
+  title:     {model: textsim, params: {source: tfidf, field: title, k: 50}}
+  itemknn:   {model: itemknn, params: {k: 100, shrink: 10.0}}
+  cat:       {model: affinity, params: {attr: leaf}}
+  path:      {model: affinity, params: {attr: path}}
+evaluate:
+  only_ceasea: "ceasea=1"
+init: "ceasea=1,fnbg=0.5,tfidf=0.1,itemknn=0.3,cat=0.2,title=0.1,path=0.05"
+search:
+  fnbg:     [0.1, 0.25, 0.35]
+  itemknn:  [0, 0.15]
+  tfidf:    [0, 0.05]
+  cat:      [0.1, 0.3]
+  title:    [0, 0.05]
+  path:     [0]
+rounds: 1
+save_best: configs/blend_cease_artifact.yaml

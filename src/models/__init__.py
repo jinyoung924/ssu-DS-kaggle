@@ -1,5 +1,6 @@
 from .affinity import Affinity
 from .blend import Blend
+from .cease import CEASE
 from .ease import EASE
 from .fileorder import FileOrderNeighbor
 from .itemknn import ItemKNN
@@ -21,6 +22,7 @@ MODELS = {
     "textsim": TextSim,              # 상품 텍스트 유사도
     "alive": AliveWindow,            # 유저 활동 기간 안에 팔린 아이템
     "easetime": EASETime,            # 시간 감쇠 EASE
+    "cease": CEASE,                  # 콘텐츠(텍스트/브랜드)를 Gram에 더한 시간 감쇠 EASE
     "precomputed": PrecomputedEmb,   # kaggle/에서 GPU로 학습한 임베딩
     "blend": Blend,
 }

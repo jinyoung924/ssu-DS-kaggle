@@ -1,0 +1,29 @@
+# 개선안_01 방법 C: 시간 감쇠 EASE 대신 콘텐츠 결합 EASE(CEASE)를 쓰고 blend 가중치를 다시 맞춘다.
+#   uv run python -m scripts.tune_blend configs/tune/a1_cease.yaml
+# CEASE가 텍스트/브랜드를 Gram 안에 넣으므로 TF-IDF·브랜드 component의 비중은 줄어들 것으로 예상.
+components:
+  cease:     {model: cease, params: {reg: 500.0, tau_days: 365, alpha: 3.0, beta: 3.0}}
+  cease_ed:  {model: cease, params: {reg: 250.0, tau_days: 365, reg_pop: 0.3, alpha: 3.0, beta: 3.0}}
+  fnbg:      {model: fileorder, params: {window: 50, kernel: gauss, sigma: 20}}
+  tfidf:     {model: textsim, params: {source: tfidf, field: text, k: 50}}
+  title:     {model: textsim, params: {source: tfidf, field: title, k: 50}}
+  itemknn:   {model: itemknn, params: {k: 100, shrink: 10.0}}
+  cat:       {model: affinity, params: {attr: leaf}}
+  store:     {model: affinity, params: {attr: store}}
+  path:      {model: affinity, params: {attr: path}}
+evaluate:
+  only_cease:    "cease=1"
+  only_cease_ed: "cease_ed=1"
+  swap_ed:       "cease_ed=1,fnbg=0.5,tfidf=0.25,itemknn=0.3,cat=0.2,store=0.2,title=0.1,path=0.05"
+init: "cease=1,fnbg=0.5,tfidf=0.25,itemknn=0.3,cat=0.2,store=0.2,title=0.1,path=0.05"
+search:
+  cease_ed: [0.3, 0.6, 1.0]
+  cease:    [0, 0.5]
+  tfidf:    [0, 0.1, 0.15]
+  store:    [0, 0.1]
+  cat:      [0.1, 0.3]
+  itemknn:  [0.15, 0.5]
+  fnbg:     [0.4, 0.6]
+  title:    [0, 0.05]
+rounds: 2
+save_best: configs/blend_cease.yaml

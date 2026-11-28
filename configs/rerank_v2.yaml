@@ -1,0 +1,40 @@
+# 재정렬 v2의 1단계(후보 생성)와 feature용 component (scripts/rerank2.py, 개선안_01.md 방법 A~C)
+#   python -m scripts.rerank2 --config configs/rerank_v2.yaml --train-seeds 1 2 3 4 5 6 7 8 --eval-seed 42 --folds 4
+# weight > 0: blend 점수(후보 생성)에 들어감. 가중치는 configs/tune/a1_cease.yaml 결과 (valid 0.07136).
+# feature: true: blend에는 넣지 않고 점수만 재정렬 feature로 쓴다.
+model: blend
+params:
+  components:
+  - model: cease
+    weight: 1.0
+    params: {reg: 500.0, tau_days: 365, alpha: 3.0, beta: 3.0}
+  - model: fileorder
+    weight: 0.5
+    params: {window: 50, kernel: gauss, sigma: 20}
+  - model: textsim
+    weight: 0.1
+    params: {source: tfidf, field: text, k: 50}
+  - model: itemknn
+    weight: 0.3
+    params: {k: 100, shrink: 10.0}
+  - model: affinity
+    weight: 0.2
+    params: {attr: leaf}
+  - model: textsim
+    weight: 0.1
+    params: {source: tfidf, field: title, k: 50}
+  - model: affinity
+    weight: 0.05
+    params: {attr: path}
+  - model: cease               # 가장 강한 단일 모델 (단독 0.0609)
+    feature: true
+    params: {reg: 250.0, tau_days: 365, reg_pop: 0.3, alpha: 3.0, beta: 3.0}
+  - model: easetime            # 콘텐츠 없는 순수 구매 동시발생
+    feature: true
+    params: {reg: 500.0, tau_days: 365}
+  - model: poscooc             # 파일 위치 구간 기반 아이템 유사도 (단독 0.039)
+    feature: true
+    params: {bin: 25, overlap: true, base: itemknn, k: 100}
+  - model: affinity
+    feature: true
+    params: {attr: store}

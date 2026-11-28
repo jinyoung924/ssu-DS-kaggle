@@ -13,6 +13,9 @@ def _dense(x):
     return x.toarray() if sp.issparse(x) else x
 
 
+_S_CACHE = {}  # 텍스트 유사도는 구매 기록과 무관하므로 같은 설정이면 프로세스 안에서 한 번만 계산
+
+
 class TextSim(Recommender):
     """상품 텍스트 유사도 (content 기반). score = X_u @ S, S는 아이템마다 코사인 top-k.
 
@@ -20,14 +23,23 @@ class TextSim(Recommender):
     source=emb: kaggle/text_embed_gpu.py가 GPU로 만든 임베딩 (.npy, item_id 순서)
     """
 
-    def __init__(self, source="tfidf", field="text", k=50, emb_path="data/external/text_emb.npy", min_df=2, max_df=0.2):
+    def __init__(self, source="tfidf", field="text", k=50, emb_path="data/external/text_emb.npy", min_df=2, max_df=0.2,
+                 power=1.0):
         self.source, self.field, self.k, self.emb_path = source, field, k, emb_path
         self.min_df, self.max_df = min_df, max_df
+        self.power = power  # 유사도를 power제곱: 1보다 크면 거의 같은 상품(높은 유사도)을 더 강조
 
     def _fit(self, X, eval_fn=None):
         enc = self.ctx["enc"]
-        E = self._tfidf(enc) if self.source == "tfidf" else self._emb(enc)
-        self.S = topk_sim(lambda s, e: _dense(E[s:e] @ E.T), X.shape[1], self.k)
+        key = (self.source, self.field, self.k, self.emb_path, self.min_df, self.max_df, self.power,
+               tuple(enc.items[:5]), len(enc.items))
+        if key not in _S_CACHE:
+            E = self._tfidf(enc) if self.source == "tfidf" else self._emb(enc)
+            S = topk_sim(lambda s, e: _dense(E[s:e] @ E.T), X.shape[1], self.k)
+            if self.power != 1.0:
+                S.data **= self.power
+            _S_CACHE[key] = S
+        self.S = _S_CACHE[key]
 
     def _tfidf(self, enc):
         texts = features.item_attr(enc, self.field)

@@ -19,19 +19,8 @@ class PositionCooc(Recommender):
         self.k, self.shrink, self.reg = k, shrink, reg
 
     def _fit(self, X, eval_fn=None):
-        order = features.user_file_order(self.ctx["enc"])
-        n_u, n_i = X.shape
-        pos = np.full(n_u, -1, np.int64)
-        pos[order] = np.arange(len(order))
-        ok = np.flatnonzero(pos >= 0)
-        Z = []
-        for off in ([0, self.bin // 2] if self.overlap else [0]):
-            b = (pos[ok] + off) // self.bin
-            M = sp.csr_matrix((np.ones(len(ok), np.float32), (b, ok)), shape=(b.max() + 1, n_u))
-            Z.append((M @ X).toarray())
-        Z = np.vstack(Z).astype(np.float32)
-        G = Z.T @ Z  # 같은 파일 구간에 구매자가 함께 등장한 정도 (item x item, dense)
-        del Z
+        n_i = X.shape[1]
+        G = position_gram(X, self.ctx["enc"], self.bin, self.overlap)
         if self.base == "ease":
             self.W = EASE(reg=self.reg)._solve(G)
         else:
@@ -41,3 +30,19 @@ class PositionCooc(Recommender):
     def score(self, users, X):
         s = X[users] @ self.W
         return s if isinstance(s, np.ndarray) else s.toarray()
+
+
+def position_gram(X, enc, bin=25, overlap=True) -> np.ndarray:
+    """리뷰 파일 위치 bin명 구간을 가짜 세션으로 본 item x item Gram (dense). Z[구간, i] = 그 구간의 i 구매자 수."""
+    order = features.user_file_order(enc)
+    n_u = X.shape[0]
+    pos = np.full(n_u, -1, np.int64)
+    pos[order] = np.arange(len(order))
+    ok = np.flatnonzero(pos >= 0)
+    Z = []
+    for off in ([0, bin // 2] if overlap else [0]):
+        b = (pos[ok] + off) // bin
+        M = sp.csr_matrix((np.ones(len(ok), np.float32), (b, ok)), shape=(b.max() + 1, n_u))
+        Z.append((M @ X).toarray())
+    Z = np.vstack(Z).astype(np.float32)
+    return Z.T @ Z  # 같은 파일 구간에 구매자가 함께 등장한 정도
