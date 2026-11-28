@@ -1,4 +1,4 @@
-# 재정렬 v3: 후보 생성기와 1위 feature를 CEASE-A(Artifact까지 Gram에 결합)로 바꾼 버전 (개선안_01.md 방법 C-2)
+# 재정렬 v3: 후보 생성기와 1위 feature를 CEASE-A(Artifact까지 Gram에 결합)로 바꾼 버전 (docs/개선안_01.md 방법 C-2)
 #   python -m scripts.rerank2 --config configs/rerank_v3.yaml --train-seeds 1 2 3 4 5 6 7 8 --eval-seed 42 --folds 4
 # weight > 0: blend 점수(후보 생성)에 들어감. 가중치는 configs/tune/a2_cease_artifact.yaml 결과 (valid 0.07273).
 # feature: true: blend에는 넣지 않고 점수만 재정렬 feature로 쓴다.

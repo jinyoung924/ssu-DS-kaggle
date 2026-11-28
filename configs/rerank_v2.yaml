@@ -1,4 +1,4 @@
-# 재정렬 v2의 1단계(후보 생성)와 feature용 component (scripts/rerank2.py, 개선안_01.md 방법 A~C)
+# 재정렬 v2의 1단계(후보 생성)와 feature용 component (scripts/rerank2.py, docs/개선안_01.md 방법 A~C)
 #   python -m scripts.rerank2 --config configs/rerank_v2.yaml --train-seeds 1 2 3 4 5 6 7 8 --eval-seed 42 --folds 4
 # weight > 0: blend 점수(후보 생성)에 들어감. 가중치는 configs/tune/a1_cease.yaml 결과 (valid 0.07136).
 # feature: true: blend에는 넣지 않고 점수만 재정렬 feature로 쓴다.

@@ -1,12 +1,12 @@
-"""2단계 추천 v2: blend 후보 top-N을 LightGBM으로 재정렬. 여러 split으로 학습 데이터를 늘린다 (개선안_01.md 축 B).
+"""2단계 추천 v2: blend 후보 top-N을 LightGBM으로 재정렬. 여러 split으로 학습 데이터를 늘린다 (docs/개선안_01.md 축 B).
 
   # 검증: seed 1~4 split으로 학습, seed 42 split(기존 로컬 검증)으로 평가
   python -m scripts.rerank2 --config configs/blend_best.yaml --train-seeds 1 2 3 4 --eval-seeds 42
-  # 평가 split 3개: 각 seed를 차례로 평가 split으로 두고 나머지 split 전체로 학습해 평균 (개선 계획_02.md)
+  # 평가 split 3개: 각 seed를 차례로 평가 split으로 두고 나머지 split 전체로 학습해 평균 (docs/개선 계획_02.md)
   python -m scripts.rerank2 --config configs/rerank_v3.yaml --train-seeds 3 4 5 6 7 8 --eval-seeds 42 1 2 --compare <run_id>
   # 제출: 평가 split까지 모두 학습에 쓰고 train 전체로 만든 후보를 재정렬
   python -m scripts.rerank2 --config configs/blend_best.yaml --train-seeds 1 2 3 4 --eval-seeds 42 --submit
-  # --bags N: 유저 묶음 나누기와 LightGBM seed를 바꿔 N번 학습해 평균. 현재 최고 설정의 전체 명령은 개선 계획_02.md 4-2
+  # --bags N: 유저 묶음 나누기와 LightGBM seed를 바꿔 N번 학습해 평균. 현재 최고 설정의 전체 명령은 docs/개선 계획_02.md 4-2
 
 v1(scripts/rerank.py)이 실패한 이유: 정답이 split 하나의 6,781개뿐이라 GBDT가 blend보다 못 배웠다.
 v2: split마다 component를 다시 학습해 후보와 feature를 만들고(data/processed/rerank/에 캐시), 정답을 split 수만큼 늘린다.
@@ -259,7 +259,7 @@ def split_features(cfg, cfg_tag, seed, n_cand, df, enc, test_users, nested_of=No
 
 
 def sd_features(tr, enc, users, cand, batch=1024):
-    """같은 날 동시구매 (개선 계획_02.md 2-2): 같은 날 쓴 리뷰는 같은 주문으로 받은 상품일 가능성이 높다.
+    """같은 날 동시구매 (docs/개선 계획_02.md 2-2): 같은 날 쓴 리뷰는 같은 주문으로 받은 상품일 가능성이 높다.
     리뷰의 38%가 같은 날 다른 리뷰와 함께 있고, 정답의 26%가 유저의 train 아이템과 '다른 유저가 같은 날 함께 산' 관계로 이어진다."""
     X = enc.matrix(tr).tocsr()
     n_u, n_i = X.shape
@@ -353,7 +353,7 @@ def gather(tparts, seeds, user_mask, keep, objective, N):
 
 
 def partition(n_users, K, seed):
-    """유저 K묶음과 early stopping 유저(10%). seed 0은 개선안_01.md의 결과와 같은 나누기."""
+    """유저 K묶음과 early stopping 유저(10%). seed 0은 docs/개선안_01.md의 결과와 같은 나누기."""
     rng = np.random.default_rng(seed)
     return rng.integers(0, K, n_users), rng.random(n_users) < 0.1
 
